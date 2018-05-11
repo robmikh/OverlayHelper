@@ -1,9 +1,8 @@
 #pragma once
 
-class SimpleCapture : public Windows::Foundation::IClosable
+class SimpleCapture
 {
 public:
-    SimpleCapture(std::nullptr_t) {}
     SimpleCapture(
         winrt::Microsoft::Graphics::Canvas::CanvasDevice const& device,
         winrt::Windows::Graphics::Capture::GraphicsCaptureItem const& item);
@@ -24,7 +23,7 @@ private:
     {
         if (m_closed.load() == true)
         {
-            throw hresult_error(RO_E_CLOSED);
+            throw winrt::hresult_error(RO_E_CLOSED);
         }
     }
 

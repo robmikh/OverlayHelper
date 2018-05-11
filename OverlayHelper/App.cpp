@@ -33,7 +33,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
     {
     }
 
-    void SetWindow(CoreWindow const & window)
+    void SetWindow(CoreWindow const &)
     {
     }
 
@@ -58,13 +58,13 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
             m_content.RelativeOffsetAdjustment({ 0.5f, 0.5f, 0 });
             m_content.RelativeSizeAdjustment({ 1, 1 });
             m_content.Size({ -80, -80 });
-            m_content.Brush = m_brush;
+            m_content.Brush(m_brush);
             m_brush.HorizontalAlignmentRatio(0.5f);
             m_brush.VerticalAlignmentRatio(0.5f);
             m_brush.Stretch(CompositionStretch::Uniform);
             auto shadow = m_compositor.CreateDropShadow();
             shadow.Mask(m_brush);
-            m_content.Shadow = shadow;
+            m_content.Shadow(shadow);
             m_root.Children().InsertAtTop(m_content);
 
             m_device = Microsoft::Graphics::Canvas::CanvasDevice();

@@ -17,14 +17,14 @@ using namespace Microsoft::Graphics::Canvas;
 using namespace Microsoft::Graphics::Canvas::UI::Composition;
 
 SimpleCapture::SimpleCapture(
-    CanvasDevice const & device, 
-    GraphicsCaptureItem const & item)
+    CanvasDevice const& device, 
+    GraphicsCaptureItem const& item)
 {
     m_item = item;
     m_device = device;
 
     // TODO: Dpi?
-    m_swapChain = CanvasSwapChain(m_device, m_item.Size().Width, m_item.Size().Height, 96);
+    m_swapChain = CanvasSwapChain(m_device, (float)m_item.Size().Width, (float)m_item.Size().Height, 96);
 
     // Create our thread
     m_dispatcherQueueController = DispatcherQueueController::CreateOnDedicatedThread();
@@ -63,7 +63,7 @@ void SimpleCapture::StartCapture()
 }
 
 ICompositionSurface SimpleCapture::CreateSurface(
-    Compositor const & compositor)
+    Compositor const& compositor)
 {
     CheckClosed();
     return CanvasComposition::CreateCompositionSurfaceForSwapChain(compositor, m_swapChain);
@@ -90,8 +90,8 @@ void SimpleCapture::Close()
 }
 
 void SimpleCapture::OnFrameArrived(
-    Direct3D11CaptureFramePool const & sender, 
-    IInspectable const & args)
+    Direct3D11CaptureFramePool const& sender, 
+    IInspectable const&)
 {
     auto newSize = false;
 
@@ -106,7 +106,7 @@ void SimpleCapture::OnFrameArrived(
             // After we do that, retire the frame and then recreate our frame pool.
             newSize = true;
             m_lastSize = frame.ContentSize();
-            m_swapChain.ResizeBuffers(m_lastSize.Width, m_lastSize.Height);
+            m_swapChain.ResizeBuffers((float)m_lastSize.Width, (float)m_lastSize.Height);
         }
 
         {
