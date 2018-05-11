@@ -33,15 +33,23 @@ SimpleCapture::SimpleCapture(
     // Don't return from the constructor until our work has finished on
     // the capture thread.
     auto initialized = std::make_shared<safe_flag>();
+	// If we were to just capture the item and device in the lambda, we
+	// would end up smuggling the objects to the other thread and get a 
+	// marshalling error. Use an agile ref to get around this.
+	auto itemAgile = agile_ref(m_item);
+	auto deviceAgile = agile_ref(m_device);
     auto success = m_dispatcherQueue.TryEnqueue([=, &initialized]() -> void
     {
+		auto itemTemp = itemAgile.get();
+		auto deviceTemp = deviceAgile.get();
+
         m_framePool = Direct3D11CaptureFramePool::Create(
-            m_device,
+			deviceTemp,
             DirectXPixelFormat::B8G8R8A8UIntNormalized,
             2,
-            m_item.Size());
-        m_session = m_framePool.CreateCaptureSession(m_item);
-        m_lastSize = m_item.Size();
+			itemTemp.Size());
+        m_session = m_framePool.CreateCaptureSession(itemTemp);
+        m_lastSize = itemTemp.Size();
         m_framePool.FrameArrived({ this, &SimpleCapture::OnFrameArrived });
 
         initialized->set();
