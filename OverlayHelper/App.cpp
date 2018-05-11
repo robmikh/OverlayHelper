@@ -1,21 +1,21 @@
 #include "pch.h"
+#include "Capture.h"
 
 using namespace winrt;
 
 using namespace Windows;
 using namespace Windows::ApplicationModel::Core;
+using namespace Windows::Foundation;
 using namespace Windows::Foundation::Numerics;
+using namespace Windows::Graphics::Capture;
 using namespace Windows::UI;
 using namespace Windows::UI::Core;
 using namespace Windows::UI::Composition;
+using namespace Windows::UI::Popups;
+using namespace Microsoft::Graphics::Canvas;
 
 struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 {
-    CompositionTarget m_target{ nullptr };
-    VisualCollection m_visuals{ nullptr };
-    Visual m_selected{ nullptr };
-    float2 m_offset{};
-
     IFrameworkView CreateView()
     {
         return *this;
@@ -33,116 +33,90 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
     {
     }
 
+    void SetWindow(CoreWindow const & window)
+    {
+    }
+
     void Run()
     {
         CoreWindow window = CoreWindow::GetForCurrentThread();
-        window.Activate();
-
         CoreDispatcher dispatcher = window.Dispatcher();
-        dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
-    }
 
-    void SetWindow(CoreWindow const & window)
-    {
-        Compositor compositor;
-        ContainerVisual root = compositor.CreateContainerVisual();
-        m_target = compositor.CreateTargetForCurrentView();
-        m_target.Root(root);
-        m_visuals = root.Children();
+        m_compositor = Compositor();
+        m_target = m_compositor.CreateTargetForCurrentView();
+        m_root = m_compositor.CreateSpriteVisual();
+        m_content = m_compositor.CreateSpriteVisual();
+        m_brush = m_compositor.CreateSurfaceBrush();
 
-        window.PointerPressed({ this, &App::OnPointerPressed });
-        window.PointerMoved({ this, &App::OnPointerMoved });
+        m_root.RelativeSizeAdjustment({ 1, 1 });
+        m_root.Brush(m_compositor.CreateColorBrush(Colors::White()));
+        m_target.Root(m_root);
 
-        window.PointerReleased([&](auto && ...)
+        if (GraphicsCaptureSession::IsSupported())
         {
-            m_selected = nullptr;
-        });
-    }
+            m_content.AnchorPoint({ 0.5f, 0.5f });
+            m_content.RelativeOffsetAdjustment({ 0.5f, 0.5f, 0 });
+            m_content.RelativeSizeAdjustment({ 1, 1 });
+            m_content.Size({ -80, -80 });
+            m_content.Brush = m_brush;
+            m_brush.HorizontalAlignmentRatio(0.5f);
+            m_brush.VerticalAlignmentRatio(0.5f);
+            m_brush.Stretch(CompositionStretch::Uniform);
+            auto shadow = m_compositor.CreateDropShadow();
+            shadow.Mask(m_brush);
+            m_content.Shadow = shadow;
+            m_root.Children().InsertAtTop(m_content);
 
-    void OnPointerPressed(IInspectable const &, PointerEventArgs const & args)
-    {
-        float2 const point = args.CurrentPoint().Position();
+            m_device = Microsoft::Graphics::Canvas::CanvasDevice();
 
-        for (Visual visual : m_visuals)
-        {
-            float3 const offset = visual.Offset();
-            float2 const size = visual.Size();
-
-            if (point.x >= offset.x &&
-                point.x < offset.x + size.x &&
-                point.y >= offset.y &&
-                point.y < offset.y + size.y)
+            // We can't just call the picker here, because no one is pumping messages yet.
+            // By asking the dispatcher for our UI thread to run this, we ensure that the
+            // message pump is pumping messages by the time this runs.
+            auto ignored = dispatcher.RunAsync(CoreDispatcherPriority::Normal, [=]() -> void
             {
-                m_selected = visual;
-                m_offset.x = offset.x - point.x;
-                m_offset.y = offset.y - point.y;
-            }
-        }
+                auto ignoredAction = StartCaptureAsync();
+            });
 
-        if (m_selected)
-        {
-            m_visuals.Remove(m_selected);
-            m_visuals.InsertAtTop(m_selected);
+
         }
         else
         {
-            AddVisual(point);
-        }
-    }
-
-    void OnPointerMoved(IInspectable const &, PointerEventArgs const & args)
-    {
-        if (m_selected)
-        {
-            float2 const point = args.CurrentPoint().Position();
-
-            m_selected.Offset(
+            auto ignored = dispatcher.RunAsync(CoreDispatcherPriority::Normal, [=]() -> void
             {
-                point.x + m_offset.x,
-                point.y + m_offset.y,
-                0.0f
+                auto dialog = MessageDialog(L"Screen capture is not supported on this device for this release of Windows!");
+
+                auto ignoredOperation = dialog.ShowAsync();
             });
         }
+        
+        window.Activate();
+        dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
     }
 
-    void AddVisual(float2 const point)
+    IAsyncAction StartCaptureAsync()
     {
-        Compositor compositor = m_visuals.Compositor();
-        SpriteVisual visual = compositor.CreateSpriteVisual();
+        auto picker = GraphicsCapturePicker();
+        auto item = co_await picker.PickSingleItemAsync();
 
-        static Color colors[] =
+        if (item != nullptr)
         {
-            { 0xDC, 0x5B, 0x9B, 0xD5 },
-            { 0xDC, 0xED, 0x7D, 0x31 },
-            { 0xDC, 0x70, 0xAD, 0x47 },
-            { 0xDC, 0xFF, 0xC0, 0x00 }
-        };
+            m_capture = std::make_unique<SimpleCapture>(m_device, item);
 
-        static unsigned last = 0;
-        unsigned const next = ++last % _countof(colors);
-        visual.Brush(compositor.CreateColorBrush(colors[next]));
+            auto surface = m_capture->CreateSurface(m_compositor);
+            m_brush.Surface(surface);
 
-        float const BlockSize = 100.0f;
-
-        visual.Size(
-        {
-            BlockSize,
-            BlockSize
-        });
-
-        visual.Offset(
-        {
-            point.x - BlockSize / 2.0f,
-            point.y - BlockSize / 2.0f,
-            0.0f,
-        });
-
-        m_visuals.InsertAtTop(visual);
-
-        m_selected = visual;
-        m_offset.x = -BlockSize / 2.0f;
-        m_offset.y = -BlockSize / 2.0f;
+            m_capture->StartCapture();
+        }
     }
+
+    Compositor m_compositor{ nullptr };
+    CompositionTarget m_target{ nullptr };
+    SpriteVisual m_root{ nullptr };
+    SpriteVisual m_content{ nullptr };
+    CompositionSurfaceBrush m_brush{ nullptr };
+    
+    CanvasDevice m_device{ nullptr };
+    std::unique_ptr<SimpleCapture> m_capture{ nullptr };
 };
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
