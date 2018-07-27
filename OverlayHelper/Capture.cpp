@@ -85,7 +85,7 @@ void SimpleCapture::Close()
 		// We could explicitly call close, or we could just release
 		// our references. When the ref count drops to 0, Close is 
 		// called automatically. In garbage collected environments, 
-		// you should call Close, but you don't need to for C++.
+		// you should call Close/Dispose, but you don't need to for C++.
         //m_session.Close();
         //m_framePool.Close();
         //m_swapChain.Close();
