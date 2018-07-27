@@ -78,12 +78,12 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
                 auto ignoredAction = StartCaptureAsync();
             });
 
-			m_doubleTapHelper = std::make_unique<DoubleTapHelper>(window);
-			m_doubleTapHelper->DoubleTapped([=](auto &&, auto&&)
-			{
-				StopCapture();
-				auto ignored = StartCaptureAsync();
-			});
+            m_doubleTapHelper = std::make_unique<DoubleTapHelper>(window);
+            m_doubleTapHelper->DoubleTapped([=](auto &&, auto&&)
+            {
+                StopCapture();
+                auto ignored = StartCaptureAsync();
+            });
         }
         else
         {
@@ -115,11 +115,11 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         }
     }
 
-	void StopCapture()
-	{
-		m_capture->Close();
-		m_brush.Surface(nullptr);
-	}
+    void StopCapture()
+    {
+        m_capture->Close();
+        m_brush.Surface(nullptr);
+    }
 
     Compositor m_compositor{ nullptr };
     CompositionTarget m_target{ nullptr };
@@ -129,7 +129,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
     
     CanvasDevice m_device{ nullptr };
     std::unique_ptr<SimpleCapture> m_capture{ nullptr };
-	std::unique_ptr<DoubleTapHelper> m_doubleTapHelper{ nullptr };
+    std::unique_ptr<DoubleTapHelper> m_doubleTapHelper{ nullptr };
 };
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)

@@ -82,18 +82,18 @@ void SimpleCapture::Close()
     auto expected = false;
     if (m_closed.compare_exchange_strong(expected, true))
     {
-		// We could explicitly call close, or we could just release
-		// our references. When the ref count drops to 0, Close is 
-		// called automatically. In garbage collected environments, 
-		// you should call Close/Dispose, but you don't need to for C++.
+        // We could explicitly call close, or we could just release
+        // our references. When the ref count drops to 0, Close is 
+        // called automatically. In garbage collected environments, 
+        // you should call Close/Dispose, but you don't need to for C++.
         //m_session.Close();
         //m_framePool.Close();
         //m_swapChain.Close();
 
-		m_session = nullptr;
-		m_framePool = nullptr;
+        m_session = nullptr;
+        m_framePool = nullptr;
         m_item = nullptr;
-		m_swapChain = nullptr;
+        m_swapChain = nullptr;
 
         auto ignored = m_dispatcherQueueController.ShutdownQueueAsync();
         m_dispatcherQueueController = nullptr;
