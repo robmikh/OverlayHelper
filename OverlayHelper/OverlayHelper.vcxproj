@@ -70,7 +70,7 @@
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>%(AdditionalOptions) /permissive- /bigobj</AdditionalOptions>
+      <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -79,6 +79,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Capture.h" />
+    <ClInclude Include="DoubleTapHelper.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="safe_flag.h" />
   </ItemGroup>
@@ -97,6 +98,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Capture.cpp" />
+    <ClCompile Include="DoubleTapHelper.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
