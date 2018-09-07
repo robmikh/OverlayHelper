@@ -1,24 +1,25 @@
 #pragma once
 
-typedef std::shared_ptr<std::function<void(void)>>
-    DoubleTapHelper_DoubleTapped;
+typedef std::shared_ptr<std::function<void(winrt::Windows::Foundation::Rect)>>
+    RegionSelectHelper_RegionSelected;
 
-class DoubleTapHelper
+class RegionSelectHelper
 {
 public:
-    DoubleTapHelper(
-        winrt::Windows::UI::Core::CoreWindow const& window);
-    ~DoubleTapHelper() { Close(); }
+    RegionSelectHelper(
+        winrt::Windows::UI::Core::CoreWindow const& window,
+        winrt::Windows::UI::Composition::ContainerVisual const& hostVisual);
+    ~RegionSelectHelper() { Close(); }
 
     void Close();
 
-    robmikh::event_token DoubleTapped(DoubleTapHelper_DoubleTapped const& handler) { return m_doubleTapped.add(handler); }
-    void DoubleTapped(robmikh::event_token const& token) { m_doubleTapped.remove(token); }
+    robmikh::event_token RegionSelected(RegionSelectHelper_RegionSelected const& handler) { return m_selected.add(handler); }
+    void RegionSelected(robmikh::event_token const& token) { m_selected.remove(token); }
 
 private:
-    void OnTapped(
+    void OnDragging(
         winrt::Windows::UI::Input::GestureRecognizer const& sender,
-        winrt::Windows::UI::Input::TappedEventArgs const& args);
+        winrt::Windows::UI::Input::DraggingEventArgs const& args);
 
     void Window_PointerReleased(
         winrt::Windows::UI::Core::CoreWindow const&,
@@ -42,12 +43,17 @@ private:
     }
 
 private:
-    robmikh::event<DoubleTapHelper_DoubleTapped> m_doubleTapped;
+    robmikh::event<RegionSelectHelper_RegionSelected> m_selected;
     winrt::Windows::UI::Core::CoreWindow m_window{ nullptr };
     winrt::Windows::UI::Input::GestureRecognizer m_gestureRecognizer{ nullptr };
+
+    winrt::Windows::UI::Composition::ContainerVisual m_hostVisual{ nullptr };
+    winrt::Windows::UI::Composition::SpriteVisual m_visual{ nullptr };
 
     winrt::event_token m_pointerMoved;
     winrt::event_token m_pointerPressed;
     winrt::event_token m_pointerReleased;
-    winrt::event_token m_tapped;
+    winrt::event_token m_dragging;
+
+    winrt::Windows::Foundation::Numerics::float2 m_originalPosition;
 };

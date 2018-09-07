@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Capture.h"
 #include "DoubleTapHelper.h"
+#include "RegionSelectHelper.h"
 
 using namespace winrt;
 
@@ -79,11 +80,19 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
             });
 
             m_doubleTapHelper = std::make_unique<DoubleTapHelper>(window);
-            m_doubleTapHelper->DoubleTapped([=](auto &&, auto&&)
+            m_doubleTapHelper->DoubleTapped(std::make_shared<std::function<void(void)>>([=]()
             {
                 StopCapture();
                 auto ignored = StartCaptureAsync();
-            });
+            }));
+
+            auto visual = m_compositor.CreateContainerVisual();
+            m_root.Children().InsertAtTop(visual);
+            m_regionSelectHelper = std::make_unique<RegionSelectHelper>(window, visual);
+            m_regionSelectHelper->RegionSelected(std::make_shared<std::function<void(winrt::Windows::Foundation::Rect)>>([=](auto rect)
+            {
+                WINRT_TRACE("%f %f %f %f\n", rect.X, rect.Y, rect.Width, rect.Height);
+            }));
         }
         else
         {
@@ -97,6 +106,12 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         
         window.Activate();
         dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+    }
+
+    void RestartCaptureAsync()
+    {
+        StopCapture();
+        auto ignored = StartCaptureAsync();
     }
 
     IAsyncAction StartCaptureAsync()
@@ -130,6 +145,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
     CanvasDevice m_device{ nullptr };
     std::unique_ptr<SimpleCapture> m_capture{ nullptr };
     std::unique_ptr<DoubleTapHelper> m_doubleTapHelper{ nullptr };
+    std::unique_ptr<RegionSelectHelper> m_regionSelectHelper{ nullptr };
 };
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)

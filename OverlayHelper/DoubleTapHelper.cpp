@@ -26,7 +26,7 @@ void DoubleTapHelper::OnTapped(
     if (args.TapCount() == 2)
     {
         sender.CompleteGesture();
-        m_doubleTapped(nullptr, nullptr);
+        m_doubleTapped();
     }
 }
 

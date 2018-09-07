@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "winrt/Windows.Foundation.h"
 #include "winrt/Windows.ApplicationModel.Core.h"
 #include "winrt/Windows.Graphics.h"
 #include "winrt/Windows.Graphics.Capture.h"
@@ -21,3 +22,8 @@
 
 #include <atomic>
 #include <memory>
+#include <functional>
+#include <vector>
+
+
+#include "event.h"
