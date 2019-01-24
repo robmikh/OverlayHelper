@@ -36,8 +36,8 @@ SimpleCapture::SimpleCapture(
     // If we were to just capture the item and device in the lambda, we
     // would end up smuggling the objects to the other thread and get a 
     // marshalling error. Use an agile ref to get around this.
-    auto itemAgile = agile_ref(m_item);
-    auto deviceAgile = agile_ref(m_device);
+    auto itemAgile = make_agile(m_item);
+    auto deviceAgile = make_agile(m_device);
     auto success = m_dispatcherQueue.TryEnqueue([=, &initialized]() -> void
     {
         auto itemTemp = itemAgile.get();

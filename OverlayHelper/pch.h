@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include <unknwn.h>
+//#include <inspectable.h>
+
 #include "winrt/Windows.ApplicationModel.Core.h"
 #include "winrt/Windows.Graphics.h"
 #include "winrt/Windows.Graphics.Capture.h"
