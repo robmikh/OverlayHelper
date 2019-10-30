@@ -4,13 +4,12 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="Capture.cpp" />
-    <ClCompile Include="DoubleTapHelper.cpp" />
+    <ClCompile Include="MultiTapHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="Capture.h" />
-    <ClInclude Include="safe_flag.h" />
-    <ClInclude Include="DoubleTapHelper.h" />
+    <ClInclude Include="MultiTapHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Logo.scale-100.png">
@@ -40,8 +39,5 @@
     <Filter Include="Assets">
       <UniqueIdentifier>{db9086fe-bacc-4437-8272-1aa6642082db}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="readme.txt" />
   </ItemGroup>
 </Project>

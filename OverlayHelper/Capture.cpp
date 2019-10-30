@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "Capture.h"
-#include "safe_flag.h"
 
 using namespace winrt;
 
@@ -26,42 +25,14 @@ SimpleCapture::SimpleCapture(
     // TODO: Dpi?
     m_swapChain = CanvasSwapChain(m_device, (float)m_item.Size().Width, (float)m_item.Size().Height, 96);
 
-    // Create our thread
-    m_dispatcherQueueController = DispatcherQueueController::CreateOnDedicatedThread();
-    m_dispatcherQueue = m_dispatcherQueueController.DispatcherQueue();
-
-    // Don't return from the constructor until our work has finished on
-    // the capture thread.
-    auto initialized = std::make_shared<safe_flag>();
-    // If we were to just capture the item and device in the lambda, we
-    // would end up smuggling the objects to the other thread and get a 
-    // marshalling error. Use an agile ref to get around this.
-    auto itemAgile = make_agile(m_item);
-    auto deviceAgile = make_agile(m_device);
-    auto success = m_dispatcherQueue.TryEnqueue([=, &initialized]() -> void
-    {
-        auto itemTemp = itemAgile.get();
-        auto deviceTemp = deviceAgile.get();
-
-        m_framePool = Direct3D11CaptureFramePool::Create(
-            deviceTemp,
-            DirectXPixelFormat::B8G8R8A8UIntNormalized,
-            2,
-            itemTemp.Size());
-        m_session = m_framePool.CreateCaptureSession(itemTemp);
-        m_lastSize = itemTemp.Size();
-        m_framePool.FrameArrived({ this, &SimpleCapture::OnFrameArrived });
-
-        initialized->set();
-    });
-
-    if (!success)
-    {
-        throw hresult_error(E_UNEXPECTED);
-    }
-
-    initialized->wait();
-    WINRT_ASSERT(m_session != nullptr);
+    m_lastSize = m_item.Size();
+    m_framePool = Direct3D11CaptureFramePool::CreateFreeThreaded(
+        m_device,
+        DirectXPixelFormat::B8G8R8A8UIntNormalized,
+        2,
+        m_lastSize);
+    m_session = m_framePool.CreateCaptureSession(m_item);
+    m_framePool.FrameArrived({ this, &SimpleCapture::OnFrameArrived });
 }
 
 void SimpleCapture::StartCapture()
@@ -94,16 +65,12 @@ void SimpleCapture::Close()
         m_framePool = nullptr;
         m_item = nullptr;
         m_swapChain = nullptr;
-
-        auto ignored = m_dispatcherQueueController.ShutdownQueueAsync();
-        m_dispatcherQueueController = nullptr;
-        m_dispatcherQueue = nullptr;
     }
 }
 
 void SimpleCapture::OnFrameArrived(
     Direct3D11CaptureFramePool const& sender, 
-    IInspectable const&)
+    winrt::Windows::Foundation::IInspectable const&)
 {
     auto newSize = false;
 

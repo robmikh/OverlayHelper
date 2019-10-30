@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Capture.h"
-#include "DoubleTapHelper.h"
+#include "MultiTapHelper.h"
 
 using namespace winrt;
 
@@ -13,6 +13,7 @@ using namespace Windows::UI;
 using namespace Windows::UI::Core;
 using namespace Windows::UI::Composition;
 using namespace Windows::UI::Popups;
+using namespace Windows::UI::ViewManagement;
 using namespace Microsoft::Graphics::Canvas;
 
 struct App : implements<App, IFrameworkViewSource, IFrameworkView>
@@ -78,11 +79,26 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
                 auto ignoredAction = StartCaptureAsync();
             });
 
-            m_doubleTapHelper = std::make_unique<DoubleTapHelper>(window);
-            m_doubleTapHelper->DoubleTapped([=](auto &&, auto&&)
+            m_multiTapHelper = std::make_unique<MultiTapHelper>(window, 2);
+            m_multiTapHelper->MultiTapped([=](auto &&, auto&&)
             {
                 StopCapture();
                 auto ignored = StartCaptureAsync();
+            });
+            m_multiTapHelper->RightTapped([](auto&&, auto&&) -> fire_and_forget
+            {
+                auto appView = ApplicationView::GetForCurrentView();
+                if (appView.IsViewModeSupported(ApplicationViewMode::CompactOverlay))
+                {
+                    auto viewMode = appView.ViewMode();
+                    viewMode = viewMode != ApplicationViewMode::CompactOverlay ? ApplicationViewMode::CompactOverlay : ApplicationViewMode::Default;
+                    co_await appView.TryEnterViewModeAsync(viewMode);
+                }
+                else
+                {
+                    auto dialog = MessageDialog(L"Compact overlay mode is not supported!");
+                    co_await dialog.ShowAsync();
+                }
             });
         }
         else
@@ -129,10 +145,10 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
     
     CanvasDevice m_device{ nullptr };
     std::unique_ptr<SimpleCapture> m_capture{ nullptr };
-    std::unique_ptr<DoubleTapHelper> m_doubleTapHelper{ nullptr };
+    std::unique_ptr<MultiTapHelper> m_multiTapHelper{ nullptr };
 };
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 {
-    CoreApplication::Run(App());
+    CoreApplication::Run(make<App>());
 }

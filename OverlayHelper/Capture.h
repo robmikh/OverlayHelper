@@ -36,8 +36,5 @@ private:
     winrt::Microsoft::Graphics::Canvas::CanvasDevice m_device{ nullptr };
     winrt::Microsoft::Graphics::Canvas::CanvasSwapChain m_swapChain{ nullptr };
 
-    winrt::Windows::System::DispatcherQueueController m_dispatcherQueueController{ nullptr };
-    winrt::Windows::System::DispatcherQueue m_dispatcherQueue{ nullptr };
-
     std::atomic<bool> m_closed = false;
 };
